@@ -87,11 +87,49 @@ export default function initialize(parameters, api) {
 		}, 1500);
 	}
 
+	// ---- bundled data files, kept in IndexedDB ---------------------------------
+	// dict.json alone is ~10 MB and the server sends plugin files uncacheable,
+	// so every session used to download all three again. data-version.json (a
+	// few bytes, rewritten by publish.py on every deploy) names each file's
+	// hash; a stored copy with the same hash is used without any download.
+	// Without the manifest or IndexedDB this falls back to a plain fetch.
+	const versions = fetch(new URL('./data-version.json', import.meta.url), { cache: 'no-store' })
+		.then(response => response.ok ? response.json() : {})
+		.catch(() => ({}));
+	const store = new Promise(resolve => {
+		try {
+			const request = indexedDB.open('npc-live-translate', 1);
+			request.onupgradeneeded = () => request.result.createObjectStore('files');
+			request.onsuccess = () => resolve(request.result);
+			request.onerror = () => resolve(null);
+		} catch (_) { resolve(null); }
+	});
+	const storeRequest = (db, mode, run) => new Promise(resolve => {
+		try {
+			const request = run(db.transaction('files', mode).objectStore('files'));
+			request.onsuccess = () => resolve(request.result);
+			request.onerror = () => resolve(undefined);
+		} catch (_) { resolve(undefined); }
+	});
+	async function loadJson(name) {
+		const [version, db] = await Promise.all([versions.then(v => v[name]), store]);
+		if (version && db) {
+			const saved = await storeRequest(db, 'readonly', files => files.get(name));
+			if (saved?.version === version) return JSON.parse(saved.text);
+		}
+		const url = new URL('./' + name, import.meta.url);
+		if (version) url.searchParams.set('v', version);
+		const response = await fetch(url);
+		if (!response.ok) return {};
+		const text = await response.text();
+		if (version && db) storeRequest(db, 'readwrite', files => files.put({ version, text }, name));
+		return JSON.parse(text);
+	}
+
 	// ---- bundled dictionary (pre-translated NPC text) -------------------------
 	// dict.json sits beside this file and is looked up before the live server.
 	const dictionary = new Map();
-	const dictionaryLoaded = fetch(new URL('./dict.json', import.meta.url))
-		.then(response => response.ok ? response.json() : {})
+	const dictionaryLoaded = loadJson('dict.json')
 		.then(entries => { for (const [key, value] of Object.entries(entries)) dictionary.set(key, value); console.log('[npc-live-translate] dictionary entries:', dictionary.size); })
 		.catch(() => { /* no dictionary shipped: live translation only */ });
 
@@ -117,8 +155,7 @@ export default function initialize(parameters, api) {
 		const anchor = literals.reduce((longest, part) => part.length > longest.length ? part : longest, '');
 		templates.push({ regex: new RegExp('^' + pattern + '$', 's'), order, anchor, weight: literals.join('').length, weak, translated });
 	}
-	const templatesLoaded = fetch(new URL('./templates.json', import.meta.url))
-		.then(response => response.ok ? response.json() : {})
+	const templatesLoaded = loadJson('templates.json')
 		.then(entries => {
 			for (const [source, translated] of Object.entries(entries)) compileTemplate(source, translated);
 			// most literal text first: the first shape that fits is the most specific
@@ -130,8 +167,7 @@ export default function initialize(parameters, api) {
 	// Scripts sometimes show a raw map code in a menu or a line. maps.json is the
 	// Taiwan client's own map name table (mapnametable.txt), code -> name.
 	const mapNames = new Map();
-	const mapsLoaded = fetch(new URL('./maps.json', import.meta.url))
-		.then(response => response.ok ? response.json() : {})
+	const mapsLoaded = loadJson('maps.json')
 		.then(entries => { for (const [code, name] of Object.entries(entries)) mapNames.set(code, name); })
 		.catch(() => { /* no map table shipped: codes stay as they are */ });
 	const MAP_CODE = /^[a-z0-9@_]+(?:\.(?:gat|rsw))?$/;
