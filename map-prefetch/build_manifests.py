@@ -4,6 +4,7 @@ Writes, under ~/served-root/plugins/map-prefetch/data/:
 
 * neighbors.json — map -> maps one warp away (from rAthena's warp scripts,
   pre-renewal copies excluded), both directions of each warp.
+* towns.json — main towns the plugin prefetches after the neighbours.
 * files/<map>.json — the URLs the game requests while loading <map>:
   .rsw/.gat/.gnd, the minimap, ground textures, every model and
   each model's textures, spelled exactly as the client spells them.
@@ -14,7 +15,7 @@ Cloudflare cache entry, so prefetching it would do nothing.
 
 usage: python3 build_manifests.py [--neighbors-only]
 
---neighbors-only rewrites neighbors.json from existing files/ lists.
+--neighbors-only rewrites neighbors.json and towns.json from existing files/ lists.
 """
 import json
 import sys
@@ -27,6 +28,9 @@ LOCAL = 'http://127.0.0.1:3338/'
 NPC = Path.home() / 'rathena' / 'npc'
 OUT = Path.home() / 'served-root' / 'plugins' / 'map-prefetch' / 'data'
 WARP = re.compile(r'^([a-z0-9_@-]+),\d+,\d+(?:,\d+)?\t(?:warp|warp2)\t[^\t]+\t\d+,\d+,([a-z0-9_@-]+),\d+,\d+', re.M)
+# Main towns, in prefetch order (the plugin fetches them after neighbours,
+# within its session budget).
+TOWNS = ['prontera', 'izlude', 'payon', 'geffen', 'morocc', 'alberta', 'aldebaran', 'yuno']
 ASSET = re.compile(rb'([\x21-\xff][\x20-\xff]{0,120}?\.(?:rsm2?|wav|bmp|tga|jpg|png))\x00', re.I)
 
 
@@ -123,6 +127,7 @@ def main() -> None:
             print(f'{count}/{len(maps)}', flush=True)
     graph = {m: [n for n in near if n in set(maps)] for m, near in graph.items() if m in set(maps)}
     (OUT / 'neighbors.json').write_text(json.dumps(graph, separators=(',', ':')), encoding='ascii')
+    (OUT / 'towns.json').write_text(json.dumps([t for t in TOWNS if t in set(maps)]), encoding='ascii')
     print(f'maps {len(maps)}  files per map: median {sorted(sizes)[len(sizes) // 2]}, max {max(sizes)}')
 
 

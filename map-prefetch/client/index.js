@@ -9,7 +9,8 @@
 //
 // data/neighbors.json lists the maps one warp away and data/files/<map>.json
 // the URLs a map load requests (both built by build_manifests.py on the
-// server, spelled exactly as the client spells them). After the player has
+// server, spelled exactly as the client spells them); data/towns.json names
+// the main towns, prefetched after the neighbours. After the player has
 // been on a map for a while, the neighbours' files are fetched quietly: few
 // at a time, at low priority, stopped the moment a map change starts, never
 // twice in a session, not at all on metered or slow connections, and within
@@ -64,8 +65,18 @@ export default function initialize(parameters, api) {
 		await Promise.all(Array.from({ length: PARALLEL }, worker));
 	}
 
+	// Towns a player returns to by wing, Kafra or warper from anywhere; they
+	// come after the neighbours, so a nearby map is never delayed by them.
+	let townsLoaded = null;
+	const towns = () => {
+		townsLoaded ??= fetch(new URL('towns.json', base))
+			.then(response => response.ok ? response.json() : [])
+			.catch(() => []);
+		return townsLoaded;
+	};
+
 	async function prefetchAround(name, signal) {
-		for (const neighbor of await neighborsOf(name)) {
+		for (const neighbor of [...await neighborsOf(name), ...await towns()]) {
 			if (signal.aborted || spent >= BUDGET_BYTES) return;
 			if (prefetchedMaps.has(neighbor)) continue;
 			try {
