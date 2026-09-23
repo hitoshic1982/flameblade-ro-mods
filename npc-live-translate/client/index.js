@@ -154,6 +154,11 @@ export default function initialize(parameters, api) {
 		.then(entries => {
 			for (const [key, value] of Object.entries(entries)) {
 				dictionary.set(key, value);
+				// Script text keeps its outer spaces (" ~ Done"), but the boxes
+				// look up trimmed text; index the trimmed form too, unless it
+				// has an entry of its own.
+				const bare = key.trim();
+				if (bare !== key && bare && !(bare in entries)) dictionary.set(bare, value.trim());
 				const cut = NAME_SHAPE.test(key) ? cutToNameField(key) : null;
 				if (cut === null) continue;
 				truncated.set(cut, truncated.has(cut) && truncated.get(cut) !== value ? null : value);
@@ -186,7 +191,12 @@ export default function initialize(parameters, api) {
 	}
 	const templatesLoaded = loadJson('templates.json')
 		.then(entries => {
-			for (const [source, translated] of Object.entries(entries)) compileTemplate(source, translated);
+			for (const [source, translated] of Object.entries(entries)) {
+				compileTemplate(source, translated);
+				// same reason as the dictionary: boxes match trimmed text
+				const bare = source.trim();
+				if (bare !== source && bare && !(bare in entries)) compileTemplate(bare, translated.trim());
+			}
 			// most literal text first: the first shape that fits is the most specific
 			templates.sort((a, b) => b.weight - a.weight);
 			console.log('[npc-live-translate] sentence templates:', templates.length);
