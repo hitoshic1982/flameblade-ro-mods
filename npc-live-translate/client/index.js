@@ -129,8 +129,37 @@ export default function initialize(parameters, api) {
 	// ---- bundled dictionary (pre-translated NPC text) -------------------------
 	// dict.json sits beside this file and is looked up before the live server.
 	const dictionary = new Map();
+	// A unit name travels in a 24-byte field, so the client shows at most 23
+	// bytes: "Advanced Potion Merchant" arrives as "Advanced Potion Merchan".
+	// Every longer key shaped like a name (short, Title Case words, no colour
+	// code or sentence punctuation) is also indexed by that cut; sentences are
+	// left out so a short line never takes a long sentence's translation. A cut
+	// shared by names with different translations is ambiguous and stored as
+	// null (no answer).
+	const NAME_BYTES = 23;
+	const NAME_WORD = /^(?:[A-Z0-9][\w'\-&]*|of|the|and|de|du|la|le|von|van|in|on|at|for|to|a|\([^)]*\)?|\[[^\]]*\]?|#\S*|[-&'])$/;
+	const NAME_SHAPE = {
+		test: key => key.length <= 40 && !/[\^.,!?:;"~]/.test(key)
+			&& key.split(/\s+/).filter(Boolean).every(word => NAME_WORD.test(word)),
+	};
+	const truncated = new Map();
+	const utf8 = new TextEncoder(), utf8Loose = new TextDecoder('utf-8', { fatal: false });
+	function cutToNameField(text) {
+		const bytes = utf8.encode(text);
+		if (bytes.length <= NAME_BYTES) return null;
+		// a multi-byte character split by the cut is dropped, not shown as U+FFFD
+		return utf8Loose.decode(bytes.subarray(0, NAME_BYTES)).replace(/�$/, '');
+	}
 	const dictionaryLoaded = loadJson('dict.json')
-		.then(entries => { for (const [key, value] of Object.entries(entries)) dictionary.set(key, value); console.log('[npc-live-translate] dictionary entries:', dictionary.size); })
+		.then(entries => {
+			for (const [key, value] of Object.entries(entries)) {
+				dictionary.set(key, value);
+				const cut = NAME_SHAPE.test(key) ? cutToNameField(key) : null;
+				if (cut === null) continue;
+				truncated.set(cut, truncated.has(cut) && truncated.get(cut) !== value ? null : value);
+			}
+			console.log('[npc-live-translate] dictionary entries:', dictionary.size, 'truncated names:', truncated.size);
+		})
 		.catch(() => { /* no dictionary shipped: live translation only */ });
 
 	// ---- sentence templates (script text joined with values at run time) ------
@@ -277,6 +306,9 @@ export default function initialize(parameters, api) {
 		if (cache.has(text)) return cache.get(text);
 		const map = mapName(text);
 		if (map !== undefined) return map;
+		// the exact dictionary entry wins over a cut, so this comes after it
+		const cut = truncated.get(text);
+		if (cut) return cut;
 		// script lines sometimes carry stray outer spaces the box keeps
 		if (text !== text.trim()) return lookup(text.trim(), withTemplates);
 		const tag = /^\[([^\[\]]+)\]$/.exec(text);
