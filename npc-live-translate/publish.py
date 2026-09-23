@@ -6,7 +6,10 @@ copies the plugin, restarts remoteclient (it caches served files), and checks ev
 public URL. Always deploy through this script: a data file uploaded without a
 new data-version.json would leave players on their stored old copy.
 
-usage: python publish.py <backup-tag>
+usage: python publish.py <backup-tag> [--force]
+
+Refuses to run while game connections are open (the restart drops them),
+unless --force is given.
 """
 import hashlib
 import json
@@ -29,7 +32,7 @@ def sha256(data: bytes) -> str:
 
 
 def main() -> None:
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3):
         sys.exit(__doc__)
     tag = sys.argv[1]
     versions = {name: sha256((CLIENT / name).read_bytes())[:16] for name in DATA}
@@ -37,7 +40,14 @@ def main() -> None:
     print('versions', versions)
 
     ssh = ['ssh', '-i', KEY, HOST]
-    backup = ' '.join(f'[ -f {n} ] && cp {n} {n}.bak-{tag};' for n in FILES)
+    # The restart below drops every game connection: never with players on.
+    online = subprocess.run([*ssh, 'curl -s 127.0.0.1:3338/api/shield-stats'],
+                            check=True, capture_output=True, text=True).stdout
+    live = json.loads(online).get('liveSessions', 0) if online.strip() else 0
+    if live and '--force' not in sys.argv:
+        sys.exit(f'{live} game connection(s) open: publishing restarts remoteclient and '
+                 'would disconnect them. Try again later, or add --force.')
+    backup =' '.join(f'[ -f {n} ] && cp {n} {n}.bak-{tag};' for n in FILES)
     subprocess.run([*ssh, f'cd {REMOTE} && {backup} true'], check=True)
     subprocess.run(['scp', '-q', '-i', KEY, *[str(CLIENT / n) for n in FILES], f'{HOST}:{REMOTE}/'], check=True)
     # remoteclient keeps served files in memory; restart so the new ones are served.
