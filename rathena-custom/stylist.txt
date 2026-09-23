@@ -1,0 +1,57 @@
+//===== rAthena Script =======================================
+//= Stylist
+//===== By: ==================================================
+//= Euphy
+//===== Current Version: =====================================
+//= 1.2 (Flameblade)
+//===== Compatible With: =====================================
+//= rAthena Project
+//===== Description: =========================================
+//= Changes your hair style, hair color, and cloth color.
+//===== Additional Comments: =================================
+//= 1.0 Initial script.
+//= 1.1 Switched to 'getbattleflag', credits to Saithis. [Euphy]
+//= 1.2 Start from the current look instead of style 1, so opening
+//=     the menu and closing it changes nothing; colours start at 0
+//=     (the default palette, unreachable before); "Done" option.
+//============================================================
+
+prontera,170,180,1	script	Stylist#custom_stylist	122,{
+	setarray .@Styles[1],
+		getbattleflag("max_cloth_color"),
+		getbattleflag("max_hair_style"),
+		getbattleflag("max_hair_color");
+	// lowest valid value per look: palettes start at 0 (default), styles at 1
+	setarray .@Min[1], 0, 1, 0;
+	setarray .@Look[1],
+		LOOK_CLOTHES_COLOR,
+		LOOK_HAIR,
+		LOOK_HAIR_COLOR;
+	set .@s, select(" ~ Cloth color: ~ Hairstyle: ~ Hair color");
+	set .@Revert, getlook(.@Look[.@s]);
+	set .@Style, .@Revert;
+	set .@min, .@Min[.@s];
+	set .@max, .@Styles[.@s];
+	while(1) {
+		message strcharinfo(0),"This is style #"+.@Style+".";
+		set .@menu$, " ~ Next (^0055FF"+((.@Style < .@max)?.@Style+1:.@min)+"^000000): ~ Previous (^0055FF"+((.@Style > .@min)?.@Style-1:.@max)+"^000000): ~ Jump to...: ~ Revert to original (^0055FF"+.@Revert+"^000000): ~ Done";
+		switch(select(.@menu$)) {
+		case 1:
+			set .@Style, ((.@Style < .@max) ? .@Style+1 : .@min);
+			break;
+		case 2:
+			set .@Style, ((.@Style > .@min) ? .@Style-1 : .@max);
+			break;
+		case 3:
+			message strcharinfo(0),"Choose a style between "+.@min+" - "+.@max+".";
+			input .@Style,.@min,.@max;
+			break;
+		case 4:
+			set .@Style, .@Revert;
+			break;
+		case 5:
+			end;
+		}
+		setlook .@Look[.@s], .@Style;
+	}
+}
