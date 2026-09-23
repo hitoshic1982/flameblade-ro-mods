@@ -1,0 +1,3 @@
+# Deploy backups and local tooling output
+*.bak-*
+__pycache__/
