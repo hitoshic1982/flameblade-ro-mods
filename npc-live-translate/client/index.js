@@ -150,7 +150,13 @@ export default function initialize(parameters, api) {
 		// a multi-byte character split by the cut is dropped, not shown as U+FFFD
 		return utf8Loose.decode(bytes.subarray(0, NAME_BYTES)).replace(/�$/, '');
 	}
-	const dictionaryLoaded = loadJson('dict.json')
+	// names.json (optional) holds item and monster names a server builds from
+	// its own client with tools/build_names.py; the public release ships
+	// without them. It is read only when data-version.json lists it, and the
+	// dictionary's own entries win over it.
+	const namesLoaded = versions.then(v => (v['names.json'] ? loadJson('names.json') : {})).catch(() => ({}));
+	const dictionaryLoaded = Promise.all([loadJson('dict.json'), namesLoaded])
+		.then(([dictEntries, names]) => ({ ...names, ...dictEntries }))
 		.then(entries => {
 			for (const [key, value] of Object.entries(entries)) {
 				dictionary.set(key, value);
