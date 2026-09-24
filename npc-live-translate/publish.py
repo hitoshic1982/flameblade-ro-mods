@@ -19,7 +19,9 @@ import urllib.request
 from pathlib import Path
 
 CLIENT = Path(__file__).parent / 'client'
-DATA = ('dict.json', 'templates.json', 'maps.json')
+# names.json and maps.json are built locally from the official client (never
+# committed); the plugin reads them beside dict.json.
+DATA = ('dict.json', 'templates.json', 'maps.json', 'names.json')
 FILES = ('index.js', *DATA, 'data-version.json')
 HOST = 'hitoshic1982@192.168.0.246'
 KEY = str(Path.home() / '.ssh' / 'id_ed25519_macmini')

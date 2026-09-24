@@ -1,3 +1,8 @@
 # Deploy backups and local tooling output
 *.bak-*
 __pycache__/
+
+# Official Taiwan client data: built locally, never committed
+# (see README, "Deliberately not included")
+npc-live-translate/client/names.json
+npc-live-translate/client/maps.json
