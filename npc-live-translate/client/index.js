@@ -55,7 +55,14 @@ const PANE_COMPONENTS = ['NpcBox', 'NpcMenu', 'ChatBox'];
 // when a monster or NPC is selected — which needsTranslation() below already
 // filters safely on its own (pure numbers, coordinates and single-token
 // identifiers never qualify), so there is no need to skip the whole host.
-const SKIP = /^(WinLogin|WinList|CharSelect|CharCreate|Intro|BasicInfo|MiniMap|ShortCut|StatusIcons|FPS|Emoticons|MobileUI|Joystick|CashShopIcon|ChatBoxSettings|Announce|Escape|WorldMap|Navigation|SkillList|Inventory|Equipment|Storage|Cart|Vending|ChangeCart|Guild|PartyFriends|Achievement|Reputation|CheckAttendance|Roulette|WinStats|ItemInfo|SkillDescription|PlayerViewEquip|ChatRoom|WinLoading|MapName|SwitchEquip)/;
+const SKIP = /^(WinLogin|WinList|CharSelect|CharCreate|Intro|MiniMap|ShortCut(?!Option)|StatusIcons|FPS|Emoticons|MobileUI|Joystick|CashShopIcon|ChatBoxSettings|Announce|Escape|WorldMap|Navigation|SkillList|Inventory|Equipment|Storage|Cart|Vending|ChangeCart|Guild|PartyFriends|Achievement|Reputation|CheckAttendance|Roulette|WinStats|ItemInfo|SkillDescription|PlayerViewEquip|ChatRoom|WinLoading|MapName|SwitchEquip)/;
+// Windows that mix fixed labels with the player's own name and live numbers:
+// their text is only ever replaced by an exact dictionary entry, never sent
+// to the AI, so a name or a value can never be rewritten.
+const DICT_ONLY = /^(BasicInfo|ShortCutOption)/;
+// Short labels ("Area:", "BGM", "on") and button captions fail the AI filter
+// on purpose; they may still be replaced by an exact dictionary entry.
+const LABEL_MAX = 200;
 
 const SYSTEM_PROMPT =
 	'你是線上遊戲《仙境傳說 Ragnarok Online》的即時翻譯器。' +
@@ -348,6 +355,17 @@ export default function initialize(parameters, api) {
 			schedule(BATCH_DELAY_MS);
 		});
 	}
+	// Dictionary and cache only: `apply` on a hit, `miss` (if any) otherwise.
+	function requestKnown(original, apply, miss) {
+		dictionaryReady.then(() => {
+			const known = lookup(original, false);
+			if (known !== undefined) apply(known);
+			else if (miss) miss();
+		});
+	}
+	function isLabel(text) {
+		return text.length <= LABEL_MAX && /[A-Za-z]{2,}/.test(text) && !/[㐀-鿿]/.test(text);
+	}
 	function schedule(ms) {
 		clearTimeout(flushTimer);
 		flushTimer = setTimeout(flush, ms);
@@ -540,23 +558,40 @@ export default function initialize(parameters, api) {
 	}
 
 	// ---- route 3: text nodes anywhere in a window --------------------------
-	const NOT_TEXT = 'input, textarea, button, ui-button, script, style, [contenteditable]';
-	function considerTextNodes(element) {
-		if (!(element instanceof HTMLElement) || element.closest(NOT_TEXT)) return;
+	// Text inside buttons and labels too short for the AI filter are translated
+	// by exact dictionary entries only (dictOnly windows: all of their text).
+	const NOT_TEXT = 'input, textarea, script, style, [contenteditable]';
+	const BUTTON = 'button, ui-button';
+	function considerTitle(element) {
+		const title = element.getAttribute('title');
+		// the English original this mod itself put there stays English
+		if (!title || title === element.nltOwnTitle || element.nltTitle === title || !isLabel(title)) return;
+		requestKnown(title, translated => {
+			element.nltTitle = translated;
+			if (element.getAttribute('title') === title) element.setAttribute('title', translated);
+		});
+	}
+	function considerTextNodes(element, dictOnly = false) {
+		if (!(element instanceof HTMLElement)) return;
+		considerTitle(element);
+		if (element.closest(NOT_TEXT)) return;
+		const knownOnly = dictOnly || element.closest(BUTTON) !== null;
 		for (const child of element.childNodes) {
 			if (child.nodeType !== Node.TEXT_NODE) continue;
 			const raw = child.data;
 			if (!raw.includes('\n')) {
 				const text = raw.trim();
-				if (!needsTranslation(text)) continue;
+				const live = !knownOnly && needsTranslation(text);
+				if (!live && !isLabel(text)) continue;
 				if (child.nltOriginal === text) continue;
 				child.nltOriginal = text;
-				request(text, translated => {
+				(live ? request : requestKnown)(text, translated => {
 					if (!child.isConnected || child.data.trim() !== text) return;
 					const lead = raw.match(/^\s*/)[0];
 					const tail = raw.match(/\s*$/)[0];
 					child.data = lead + translated + tail;
-					if (element.isConnected && !element.title) element.title = text;
+					// the English original as a hover hint, for AI answers only
+					if (live && element.isConnected && !element.title) element.title = element.nltOwnTitle = text;
 				});
 				continue;
 			}
@@ -564,7 +599,7 @@ export default function initialize(parameters, api) {
 			// literal newline: translate each on its own -- so a line
 			// already in the dictionary or cache never waits on a slower
 			// sibling -- then reassemble once every line has an answer.
-			if (child.nltOriginal === raw) continue;
+			if (child.nltOriginal === raw || !/[A-Za-z]{2,}/.test(raw)) continue;
 			child.nltOriginal = raw;
 			const lines = raw.split('\n');
 			const results = new Array(lines.length);
@@ -572,23 +607,26 @@ export default function initialize(parameters, api) {
 			const apply = () => {
 				if (!child.isConnected || child.data !== raw) return;
 				child.data = results.join('\n');
-				if (element.isConnected && !element.title) element.title = raw;
+				if (element.isConnected && !element.title) element.title = element.nltOwnTitle = raw;
 			};
 			lines.forEach((line, i) => {
 				const text = line.trim();
-				if (!needsTranslation(text)) { results[i] = line; if (--remaining === 0) apply(); return; }
-				request(text, translated => {
+				const keep = () => { results[i] = line; if (--remaining === 0) apply(); };
+				const live = !knownOnly && needsTranslation(text);
+				if (!live && !isLabel(text)) { keep(); return; }
+				(live ? request : requestKnown)(text, translated => {
 					const lead = line.match(/^\s*/)[0];
 					const tail = line.match(/\s*$/)[0];
 					results[i] = lead + translated + tail;
 					if (--remaining === 0) apply();
-				});
+				}, keep);
 			});
 		}
 	}
-	function scanTree(element) {
-		considerTextNodes(element);
-		if (element instanceof Element) for (const node of element.querySelectorAll('*')) considerTextNodes(node);
+	function scanTree(element, dictOnly = false) {
+		considerTextNodes(element, dictOnly);
+		// a window's shadow root is not an Element but has querySelectorAll
+		if (typeof element.querySelectorAll === 'function') for (const node of element.querySelectorAll('*')) considerTextNodes(node, dictOnly);
 	}
 
 	// ---- attaching to windows ---------------------------------------------
@@ -614,20 +652,21 @@ export default function initialize(parameters, api) {
 			for (const each of panes) observer.observe(each, { childList: true });
 			for (const each of panes) for (const child of each.children) considerLine(child);
 		} else {
+			const dictOnly = DICT_ONLY.test(name);
 			observer = new MutationObserver(records => {
 				for (const record of records) {
 					if (record.type === 'characterData') {
-						if (record.target.parentElement) considerTextNodes(record.target.parentElement);
+						if (record.target.parentElement) considerTextNodes(record.target.parentElement, dictOnly);
 						continue;
 					}
 					for (const added of record.addedNodes) {
-						if (added.nodeType === Node.ELEMENT_NODE) scanTree(added);
-						else if (added.nodeType === Node.TEXT_NODE && added.parentElement) considerTextNodes(added.parentElement);
+						if (added.nodeType === Node.ELEMENT_NODE) scanTree(added, dictOnly);
+						else if (added.nodeType === Node.TEXT_NODE && added.parentElement) considerTextNodes(added.parentElement, dictOnly);
 					}
 				}
 			});
 			observer.observe(root, { childList: true, subtree: true, characterData: true });
-			scanTree(root);
+			scanTree(root, dictOnly);
 		}
 		observers.set(host, observer);
 		console.debug('[npc-live-translate] watching', name, pane ? 'panes' : 'text nodes');
