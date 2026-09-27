@@ -53,6 +53,13 @@ const CSS = `
 #WinLogin .win_login .btn.exit { width: 22px !important; height: 20px !important; background-color: #833 !important; border-color: #daa !important; }
 #WinLogin .win_login .btn.exit::after { content: "✕"; }
 #WinLogin .win_login .btn:hover { filter: brightness(1.25); }
+/* The phone layout (mobile-ui, marked by its .ro-mobile-title) lays the
+   window out as a grid with its own labels: the fixed-position labels
+   above would land on top of the fields and buttons there. */
+#WinLogin .win_login:has(> .ro-mobile-title)::before,
+#WinLogin .win_login:has(> .ro-mobile-title)::after,
+#WinLogin .win_login:has(> .ro-mobile-title) .btn.connect::after { content: none; }
+#WinLogin .win_login:has(> .ro-mobile-title) .btn.connect { width: 100% !important; height: 48px !important; }
 #WinLogin .win_login input:-webkit-autofill,
 #WinLogin .win_login input:-webkit-autofill:hover,
 #WinLogin .win_login input:-webkit-autofill:focus {

@@ -161,12 +161,12 @@ export default function mobileUI(parameters, api) {
    ${["Inventory", "Equipment", "Skills", "Quests", "Stats", "Map", "Friends", "Storage", "Chat", "Target", "Display", "Game options", "Close"].map((name) => `<button data-menu="${name}">${name}</button>`).join("")}
   </nav>
  </div>
- <button id="displayButton" aria-haspopup="dialog">Display</button>
- <dialog aria-labelledby="displayTitle"><h2 id="displayTitle">Display settings</h2>
-  <label for="layoutMode">Phone layout</label><select id="layoutMode"><option value="auto">Auto — ${autoPhone ? "phone layout here" : "desktop layout here"}</option><option value="on">On</option><option value="off">Off — desktop layout</option></select>
-  <label for="uiScale">Control size</label><input id="uiScale" type="range" min="0.85" max="1.25" step="0.05"><output id="scaleValue"></output>
-  <p>Auto chooses the phone layout on a touch screen whose short side is 900 pixels or less; this screen ${autoPhone ? "matches" : "does not"}. Phone and desktop window positions are saved separately. Changing layout mode takes effect when you reload the game.</p><output id="message" aria-live="polite"></output>
-  <button id="reload">Save and reload</button><button id="done">Done</button>
+ <button id="displayButton" aria-haspopup="dialog">顯示設定</button>
+ <dialog aria-labelledby="displayTitle"><h2 id="displayTitle">顯示設定</h2>
+  <label for="layoutMode">手機版介面</label><select id="layoutMode"><option value="auto">自動（這台裝置：${autoPhone ? "手機版" : "電腦版"}）</option><option value="on">開啟</option><option value="off">關閉（電腦版介面）</option></select>
+  <label for="uiScale">按鈕大小</label><input id="uiScale" type="range" min="0.85" max="1.25" step="0.05"><output id="scaleValue"></output>
+  <p>「自動」會在觸控螢幕、而且短邊不超過 900 像素時使用手機版；這台裝置${autoPhone ? "符合" : "不符合"}。手機版和電腦版的視窗位置分開保存。切換介面要重新載入遊戲才會生效。</p><output id="message" aria-live="polite"></output>
+  <button id="reload">儲存並重新載入</button><button id="done">完成</button>
  </dialog>`;
   document.body.append(host);
   api.cleanup(() => host.remove());
@@ -188,11 +188,11 @@ export default function mobileUI(parameters, api) {
   const save = () => {
     try {
       api.preferences.set("layout", settings);
-      root.querySelector("#message").textContent = "Saved on this browser.";
+      root.querySelector("#message").textContent = "已儲存在這個瀏覽器。";
       return true;
     } catch {
       root.querySelector("#message").textContent =
-        "Browser storage is unavailable; changes apply only for this session.";
+        "瀏覽器無法儲存設定，這次的變更只在本次遊戲有效。";
       return false;
     }
   };
@@ -436,21 +436,21 @@ export default function mobileUI(parameters, api) {
       if (container) {
         const title = document.createElement("h1");
         title.className = "ro-mobile-title";
-        title.textContent = "Ragnarok Offline";
+        title.textContent = "炎劍仙境";
         container.prepend(title);
         cleanups.push(() => title.remove());
       }
       for (const [id, text] of [
-        ["user", "Account"],
-        ["pass", "Password"],
+        ["user", "帳號"],
+        ["pass", "密碼"],
       ]) {
         const input = ui.querySelector(`#${id}`);
         attribute(input, "aria-label", text);
         attribute(input, "placeholder", text);
       }
-      label(ui.querySelector(".connect"), "Log in");
-      label(ui.querySelector(".signup"), "Sign up");
-      label(ui.querySelector(".replay"), "Replay");
+      label(ui.querySelector(".connect"), "登入");
+      label(ui.querySelector(".signup"), "註冊");
+      label(ui.querySelector(".replay"), "重播");
     }
     if (/^CharSelect/.test(name)) {
       label(ui.querySelector(".cancel"), "Back");
