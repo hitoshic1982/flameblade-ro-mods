@@ -14,6 +14,8 @@ The NPC translation plugin is also packaged on its own as [flameblade-ro-transla
 | `welcome-message/` | Puts the welcome lines in the chat box after login, once the server's login messages are in, so they are the last lines shown |
 | `bgm-autostart/` | When the browser blocks autoplay, starts the background music on the player's first click or key press, and adds an always-available mute button |
 | `easy-signup/` | A Sign Up form in the login window, so players never need rAthena's "name_M" account trick |
+| `mobile-ui/` | Touch layout for phones and tablets (large buttons, joystick, menu) with every label in Traditional Chinese; originally a plugin shipped with the ragnarokoffline.app client |
+| `login-box-contrast/` | Makes the Taiwan client's transparent login window readable (dark panel, white fields, Chinese labels); steps aside in the phone layout |
 | `map-prefetch/` | While the player stays on a map, quietly downloads the files of the maps next door, so a map change reads them from the browser cache; `build_manifests.py` builds the lists it needs on the server |
 | `rathena-custom/lub_to_lua.py`, `lub51.py` | Turn a compiled item table (.lub) back into UTF-8 Lua source, so the web client does not read it as Big5 and garble it |
 | `rathena-custom/missing_items.py`, `build_custom_items.py` | Find items the server has but the client's item table lacks, and write `tbl_custom` entries for them: a name, plus an icon borrowed from items of the same kind |

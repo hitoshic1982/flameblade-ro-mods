@@ -153,12 +153,12 @@ export default function mobileUI(parameters, api) {
  @media(max-height:480px){.skills{right:164px;bottom:20px;}.vitals{width:190px;}.actions{grid-template-columns:repeat(2,60px);}.menu{grid-template-columns:repeat(3,1fr);width:350px;}}
  </style>
  <div class="hud" hidden>
-  <div class="vitals" aria-label="Health and skill points"><div class="values" id="hptext"></div><div class="meter"><div id="hpbar"></div></div><div class="values" id="sptext"></div><div class="meter"><div id="spbar"></div></div></div>
-  <div id="target"></div><button id="menuButton" aria-expanded="false">Menu</button>
-  <div class="skills" aria-label="Quick shortcuts">${[1, 2, 3, 4].map((n) => `<button data-shortcut="${n - 1}" aria-label="Use shortcut ${n}">F${n}</button>`).join("")}</div>
-  <div class="actions"><button id="attack">Attack</button><button id="interact">Talk</button><button id="pickup">Pick up</button></div>
-  <nav class="menu" aria-label="Game menu" hidden>
-   ${["Inventory", "Equipment", "Skills", "Quests", "Stats", "Map", "Friends", "Storage", "Chat", "Target", "Display", "Game options", "Close"].map((name) => `<button data-menu="${name}">${name}</button>`).join("")}
+  <div class="vitals" aria-label="HP 與 SP"><div class="values" id="hptext"></div><div class="meter"><div id="hpbar"></div></div><div class="values" id="sptext"></div><div class="meter"><div id="spbar"></div></div></div>
+  <div id="target"></div><button id="menuButton" aria-expanded="false">選單</button>
+  <div class="skills" aria-label="快捷鍵">${[1, 2, 3, 4].map((n) => `<button data-shortcut="${n - 1}" aria-label="使用快捷鍵 ${n}">F${n}</button>`).join("")}</div>
+  <div class="actions"><button id="attack">攻擊</button><button id="interact">對話</button><button id="pickup">撿取</button></div>
+  <nav class="menu" aria-label="遊戲選單" hidden>
+   ${[["Inventory", "背包"], ["Equipment", "裝備"], ["Skills", "技能"], ["Quests", "任務"], ["Stats", "能力值"], ["Map", "地圖"], ["Friends", "好友"], ["Storage", "倉庫"], ["Chat", "聊天"], ["Target", "目標"], ["Display", "顯示設定"], ["Game options", "遊戲選項"], ["Close", "關閉"]].map(([name, text]) => `<button data-menu="${name}">${text}</button>`).join("")}
   </nav>
  </div>
  <button id="displayButton" aria-haspopup="dialog">顯示設定</button>
@@ -347,8 +347,8 @@ export default function mobileUI(parameters, api) {
         button.setAttribute(
           "aria-label",
           image
-            ? `Use ${slot.getAttribute("data-tooltip")}`
-            : `Use shortcut ${Number(button.dataset.shortcut) + 1}`,
+            ? `使用 ${slot.getAttribute("data-tooltip")}`
+            : `使用快捷鍵 ${Number(button.dataset.shortcut) + 1}`,
         );
       }
   };
@@ -426,7 +426,7 @@ export default function mobileUI(parameters, api) {
     on(element, "mousedown", (event) => event.stopPropagation());
     if (name === "MobileUI") {
       const base = ui.querySelector("#joystickBase");
-      attribute(base, "aria-label", "Movement joystick");
+      attribute(base, "aria-label", "移動搖桿");
       attribute(base, "role", "group");
     }
     if (/^WinLogin/.test(name)) {
@@ -453,11 +453,11 @@ export default function mobileUI(parameters, api) {
       label(ui.querySelector(".replay"), "重播");
     }
     if (/^CharSelect/.test(name)) {
-      label(ui.querySelector(".cancel"), "Back");
-      label(ui.querySelector(".ok"), "Play");
+      label(ui.querySelector(".cancel"), "返回");
+      label(ui.querySelector(".ok"), "開始遊戲");
       const row = document.createElement("div");
       row.className = "ro-mobile-toolbar";
-      const continueButton = button("Play / create", () => {
+      const continueButton = button("開始／建立角色", () => {
         const selected =
           ui.querySelector("canvas[data-ro-selected]") ||
           ui.querySelector("#slot0");
@@ -473,7 +473,7 @@ export default function mobileUI(parameters, api) {
         attribute(
           canvas,
           "aria-label",
-          `Character slot ${Number(canvas.id.replace("slot", "")) + 1}`,
+          `角色欄位 ${Number(canvas.id.replace("slot", "")) + 1}`,
         );
         attribute(canvas, "role", "button");
         attribute(canvas, "tabindex", "0");
@@ -499,55 +499,55 @@ export default function mobileUI(parameters, api) {
       }
     }
     if (/^CharCreate/i.test(name)) {
-      label(ui.querySelector(".btn.make"), "Create");
-      label(ui.querySelector(".btn.cancel"), "Back");
-      label(ui.querySelector(".btn.return"), "Return");
-      label(ui.querySelector(".rot_left"), "Rotate left");
-      label(ui.querySelector(".rot_right"), "Rotate right");
+      label(ui.querySelector(".btn.make"), "建立");
+      label(ui.querySelector(".btn.cancel"), "返回");
+      label(ui.querySelector(".btn.return"), "上一步");
+      label(ui.querySelector(".rot_left"), "向左轉");
+      label(ui.querySelector(".rot_right"), "向右轉");
       const input = ui.querySelector("#char_name");
-      attribute(input, "aria-label", "Character name");
-      attribute(input, "placeholder", "Character name");
+      attribute(input, "aria-label", "角色名稱");
+      attribute(input, "placeholder", "角色名稱");
     }
     if (name === "ChatBox") {
       add(
         ui.querySelector(".ui-component-root"),
-        button("Close chat", () => {
+        button("關閉聊天", () => {
           delete element.dataset.roChatOpen;
           ui.activeElement?.blur();
         }),
       );
       const input = ui.querySelector(".input-chatbox");
-      attribute(input, "aria-label", "Chat message");
+      attribute(input, "aria-label", "聊天訊息");
       cleanups.push(() => delete element.dataset.roChatOpen);
     }
     if (name === "NpcBox") {
-      label(ui.querySelector(".next"), "Next");
-      label(ui.querySelector(".close"), "Close");
+      label(ui.querySelector(".next"), "下一步");
+      label(ui.querySelector(".close"), "關閉");
     }
     if (name === "Escape") {
       for (const [selector, text] of [
-        [".resurection", "Resurrect"],
-        [".savepoint", "Return to save point"],
-        [".charselect", "Character selection"],
-        [".graphics", "Graphics"],
-        [".sound", "Sound"],
-        [".hotkey", "Shortcuts"],
-        [".exit", "Log out"],
-        [".cancel", "Return to game"],
+        [".resurection", "復活"],
+        [".savepoint", "回到儲存點"],
+        [".charselect", "回到人物選擇畫面"],
+        [".graphics", "畫質設定"],
+        [".sound", "音效設定"],
+        [".hotkey", "快捷鍵設定"],
+        [".exit", "離開遊戲"],
+        [".cancel", "繼續遊戲"],
       ])
         label(ui.querySelector(selector), text);
     }
     if (name === "NpcMenu") {
-      label(ui.querySelector(".ok"), "Choose");
-      label(ui.querySelector(".cancel"), "Cancel");
+      label(ui.querySelector(".ok"), "選擇");
+      label(ui.querySelector(".cancel"), "取消");
     }
     if (name === "Quest") {
-      label(ui.querySelector(".close-quest-container-btn"), "Close");
+      label(ui.querySelector(".close-quest-container-btn"), "關閉");
       for (const [id, text] of [
-        ["active", "Active"],
-        ["feature", "Story"],
-        ["inactive", "Inactive"],
-        ["cooldown", "Cooldown"],
+        ["active", "進行中"],
+        ["feature", "主線"],
+        ["inactive", "未進行"],
+        ["cooldown", "冷卻中"],
       ]) {
         const tab = ui.querySelector(`#${id}.quest-menu-item`);
         if (!tab) continue;
@@ -571,10 +571,10 @@ export default function mobileUI(parameters, api) {
         : null;
       const use = button(
         /^Equipment/.test(name)
-          ? "Unequip"
+          ? "卸下"
           : skills
-            ? "Use skill"
-            : "Use / equip",
+            ? "使用技能"
+            : "使用／裝備",
         () => {
           if (actionTarget())
             actionTarget().dispatchEvent(
@@ -586,7 +586,7 @@ export default function mobileUI(parameters, api) {
       add(toolbar, use);
       add(
         toolbar,
-        button("Info", () => {
+        button("資訊", () => {
           if (actionTarget())
             actionTarget().dispatchEvent(
               new MouseEvent("contextmenu", {
@@ -598,11 +598,11 @@ export default function mobileUI(parameters, api) {
       );
       if (!/^Equipment/.test(name)) {
         const message = document.createElement("output");
-        message.textContent = "Tap an item or skill, then choose an action.";
+        message.textContent = "點選道具或技能，再選擇動作。";
         for (let slot = 0; slot < 4; slot++)
           add(
             toolbar,
-            button(`Set F${slot + 1}`, () => {
+            button(`設為 F${slot + 1}`, () => {
               const id = Number(selected?.getAttribute("data-index"));
               const assigned =
                 selected?.isConnected &&
@@ -612,8 +612,8 @@ export default function mobileUI(parameters, api) {
                   id,
                 });
               message.textContent = assigned
-                ? `Assigned to F${slot + 1}.`
-                : "Select an item or a learned skill first.";
+                ? `已設定到 F${slot + 1}。`
+                : "請先選擇道具或已學會的技能。";
             }),
           );
         add(toolbar, message);
@@ -631,12 +631,12 @@ export default function mobileUI(parameters, api) {
       });
       cleanups.push(() => selected?.classList.remove("ro-mobile-selected"));
     }
-    if (name === 'SkillDescription') label(ui.querySelector('.close'), 'Close');
+    if (name === 'SkillDescription') label(ui.querySelector('.close'), '關閉');
     // Labels for native button controls do not change their visibility/state.
     for (const [selector, text] of [
-      [".titlebar .close", "Close"],
-      [".btns .cancel", "Cancel"],
-      [".btns .ok", "OK"],
+      [".titlebar .close", "關閉"],
+      [".btns .cancel", "取消"],
+      [".btns .ok", "確定"],
     ])
       label(ui.querySelector(selector), text);
     cleanups.push(

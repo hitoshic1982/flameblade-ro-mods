@@ -29,11 +29,11 @@ export function attachCommerce({
   };
   if (root.querySelector("#win_popup")) {
     for (const [key, text] of [
-      ["buy", "Buy"],
-      ["sell", "Sell"],
-      ["cancel", "Cancel"],
-      ["ok", "OK"],
-      ["close", "Close"],
+      ["buy", "購買"],
+      ["sell", "販賣"],
+      ["cancel", "取消"],
+      ["ok", "確定"],
+      ["close", "關閉"],
     ]) {
       label(
         root.querySelector(`button[data-background="btn_${key}.bmp"]`),
@@ -42,18 +42,18 @@ export function attachCommerce({
     }
   }
   if (name === "InputBox") {
-    label(root.querySelector("ui-button"), "OK");
-    attribute(root.querySelector("input"), "aria-label", "Value");
+    label(root.querySelector("ui-button"), "確定");
+    attribute(root.querySelector("input"), "aria-label", "數量");
   }
   if (name === "NpcStore") {
-    label(root.querySelector(".btn.buy"), "Buy");
-    label(root.querySelector(".btn.sell"), "Sell");
-    label(root.querySelector(".btn.cancel"), "Cancel");
-    label(root.querySelector(".btn.ok"), "OK");
+    label(root.querySelector(".btn.buy"), "購買");
+    label(root.querySelector(".btn.sell"), "販賣");
+    label(root.querySelector(".btn.cancel"), "取消");
+    label(root.querySelector(".btn.ok"), "確定");
     select(".item[data-index]");
     for (const [selector, text] of [
-      [".InputWindow", "Add selected"],
-      [".OutputWindow", "Remove selected"],
+      [".InputWindow", "加入選取的道具"],
+      [".OutputWindow", "移除選取的道具"],
     ]) {
       const panel = root.querySelector(selector),
         bar = toolbar();
@@ -68,7 +68,7 @@ export function attachCommerce({
       );
       add(
         bar,
-        button("Item info", () =>
+        button("道具資訊", () =>
           act((item) => {
             item.querySelector(".icon")?.dispatchEvent(
               new MouseEvent("contextmenu", {
@@ -96,7 +96,7 @@ export function attachCommerce({
     quantity.value = "1";
     quantity.setAttribute(
       "aria-label",
-      deposit ? "Deposit quantity" : "Withdraw quantity",
+      deposit ? "存入數量" : "取出數量",
     );
     const message = document.createElement("output");
     message.setAttribute("aria-live", "polite");
@@ -108,23 +108,23 @@ export function attachCommerce({
           count,
         });
         message.textContent = dispatched
-          ? "Transfer requested."
-          : "Choose an available quantity of an unequipped item.";
+          ? "已送出。"
+          : "請選擇未裝備的道具，以及持有範圍內的數量。";
       });
     add(bar, quantity);
     add(
       bar,
-      button(deposit ? "Deposit" : "Withdraw", () =>
+      button(deposit ? "存入" : "取出", () =>
         transfer(Number(quantity.value)),
       ),
     );
     add(
       bar,
-      button(deposit ? "Deposit all" : "Withdraw all", () => transfer("all")),
+      button(deposit ? "全部存入" : "全部取出", () => transfer("all")),
     );
     add(
       bar,
-      button(deposit ? "Back to storage" : "Open inventory", () =>
+      button(deposit ? "回到倉庫" : "打開背包", () =>
         api.actions.perform("window", {
           name: deposit ? "Storage" : "Inventory",
           open: true,
@@ -135,21 +135,21 @@ export function attachCommerce({
     add(root.querySelector(".ui-component-root"), bar);
     select(".content .item[data-index]");
     if (!deposit) {
-      label(root.querySelector(".close"), "Close storage");
-      label(root.querySelector(".search-button"), "Search");
+      label(root.querySelector(".close"), "關閉倉庫");
+      label(root.querySelector(".search-button"), "搜尋");
       attribute(
         root.querySelector(".search-input"),
         "aria-label",
-        "Search storage",
+        "搜尋倉庫",
       );
       for (const [key, title] of [
-        ["item", "Use"],
-        ["kafra", "Cash"],
-        ["armor", "Armor"],
-        ["arms", "Weapon"],
-        ["ammo", "Ammo"],
-        ["card", "Card"],
-        ["etc", "Etc"],
+        ["item", "消耗"],
+        ["kafra", "商城"],
+        ["armor", "防具"],
+        ["arms", "武器"],
+        ["ammo", "彈藥"],
+        ["card", "卡片"],
+        ["etc", "其他"],
       ])
         label(root.querySelector(`.tabs button.${key}`), title);
     }

@@ -206,7 +206,7 @@ export function componentStyle(name) {
 #charcreate_v4 #style .gender {position:static!important;display:flex;width:auto!important;height:auto!important;gap:8px;}
 #charcreate_v4 #male_container,#charcreate_v4 #female_container {position:static!important;width:90px!important;height:44px!important;}
 #charcreate_v4 .male_button,#charcreate_v4 .female_button {position:static!important;display:block;width:90px!important;height:44px!important;background:#eee2c5!important;border:1px solid #b4a27e;line-height:44px;text-align:center;}
-#charcreate_v4 .male_button::after{content:'Male';}#charcreate_v4 .female_button::after{content:'Female';}
+#charcreate_v4 .male_button::after{content:'男';}#charcreate_v4 .female_button::after{content:'女';}
 #charcreate_v4 input:checked + label {outline:2px solid #997634!important;outline-offset:-2px;}
 #charcreate_v4 .model,#charcreate_v4 .model canvas {position:static!important;display:inline-block!important;}
 #charcreate_v4 #style .rot_left,#charcreate_v4 #style .rot_right {position:static!important;vertical-align:bottom;}

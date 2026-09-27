@@ -14,6 +14,8 @@ NPC 翻译插件另外整理成独立项目 [flameblade-ro-translate](https://gi
 | `welcome-message/` | 登录后把欢迎词放进聊天框，等服务器的登录消息发完才显示，所以会是最后几行 |
 | `bgm-autostart/` | 浏览器拦截自动播放时，在玩家第一次点击或按键时补播背景音乐，并提供随时可用的静音按钮 |
 | `easy-signup/` | 登录窗口的“注册”表单，玩家不必了解 rAthena 的“账号_M”建号规则 |
+| `mobile-ui/` | 手机与平板的触控界面（大按钮、摇杆、菜单），界面文字全部中文化；原为 ragnarokoffline.app 客户端附带的插件 |
+| `login-box-contrast/` | 让台版客户端透明的登录框看得清楚（深色底、白色输入框、中文标签）；手机版排版时自动让位 |
 | `map-prefetch/` | 玩家停留在地图上时，悄悄预先下载相邻地图的文件，切换地图时直接从浏览器缓存读取；`build_manifests.py` 在服务器上生成所需清单 |
 | `rathena-custom/lub_to_lua.py`、`lub51.py` | 把编译过的道具表（.lub）转回 UTF-8 Lua 源代码，避免网页客户端把它当作 Big5 读成乱码 |
 | `rathena-custom/missing_items.py`、`build_custom_items.py` | 找出服务器有、客户端道具表没有的道具，生成 `tbl_custom` 条目：名称，加上向同类道具借用的图标 |
