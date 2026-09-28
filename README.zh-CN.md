@@ -17,6 +17,7 @@ NPC 翻译插件另外整理成独立项目 [flameblade-ro-translate](https://gi
 | `mobile-ui/` | 手机与平板的触控界面（大按钮、摇杆、菜单），界面文字全部中文化；原为 ragnarokoffline.app 客户端附带的插件 |
 | `login-box-contrast/` | 让台版客户端透明的登录框看得清楚（深色底、白色输入框、中文标签）；手机版排版时自动让位 |
 | `map-prefetch/` | 玩家停留在地图上时，悄悄预先下载相邻地图的文件，切换地图时直接从浏览器缓存读取；`build_manifests.py` 在服务器上生成所需清单 |
+| `webkit-canvas-fix/` | 修正 iPhone／iPad 选角画面角色多画一个头：iOS 的浏览器内核会读到暂存画布的旧内容，只在 iOS 上启用 |
 | `rathena-custom/lub_to_lua.py`、`lub51.py` | 把编译过的道具表（.lub）转回 UTF-8 Lua 源代码，避免网页客户端把它当作 Big5 读成乱码 |
 | `rathena-custom/missing_items.py`、`build_custom_items.py` | 找出服务器有、客户端道具表没有的道具，生成 `tbl_custom` 条目：名称，加上向同类道具借用的图标 |
 | `rathena-custom/stylist.txt` | rAthena 造型师脚本的修改版：从当前外观开始调整，只打开再关闭不会改变任何东西 |

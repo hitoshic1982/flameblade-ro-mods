@@ -17,6 +17,7 @@ NPC 翻訳プラグインは単独のプロジェクト [flameblade-ro-translate
 | `mobile-ui/` | スマートフォン・タブレット向けのタッチ操作画面（大きなボタン、ジョイスティック、メニュー）。表示文字はすべて繁体字中国語。もとは ragnarokoffline.app クライアントに同梱のプラグイン |
 | `login-box-contrast/` | 台湾版クライアントの透明なログイン枠を見やすくします（暗い背景、白い入力欄、中国語ラベル）。スマホ表示では自動的に無効になります |
 | `map-prefetch/` | プレイヤーがマップに留まっている間に、隣接マップのファイルを目立たないよう先読みし、マップ移動時にはブラウザのキャッシュから読み込ませます。必要なリストはサーバー上で `build_manifests.py` が作成します |
+| `webkit-canvas-fix/` | iPhone／iPad のキャラクター選択画面で頭が二重に描かれる問題を修正（iOS の WebKit が作業用キャンバスの古い内容を読むため）。iOS でのみ有効 |
 | `rathena-custom/lub_to_lua.py`、`lub51.py` | コンパイル済みのアイテムテーブル（.lub）を UTF-8 の Lua ソースに戻し、Web クライアントが Big5 として読んで文字化けするのを防ぎます |
 | `rathena-custom/missing_items.py`、`build_custom_items.py` | サーバーにあってクライアントのアイテムテーブルにないアイテムを探し、名前と同種アイテムから借りたアイコンを持つ `tbl_custom` エントリを作成します |
 | `rathena-custom/stylist.txt` | rAthena のスタイリストスクリプトの改良版：現在の外見から調整を始めるので、開いて閉じるだけなら何も変わりません |
